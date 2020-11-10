@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 const Cafe = require("../models/cafeModel")
 
 // Route to seed database with coffee shops within 500m of my house
-app.get("/api/seed", async function (req, res) {
+router.get("/api/seed", async function (req, res) {
     let radius = "500"
     let response = await axios.get(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=47.649349, -122.321053&radius=${radius}&keyword=coffee&key=${process.env.API_Key}`)
     let placeIds = response.data.results.map(place => place.place_id)
@@ -25,6 +25,24 @@ app.get("/api/seed", async function (req, res) {
         Cafe.create(placeObj)
     }
     res.redirect("/api/cafes")
+})
+
+// Search Places API by cafe name
+router.get("/api/places/:cafename", async function(req, res){
+    try {
+        let {data} = await axios.get(`https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${req.params.cafename}&inputtype=textquery&key=${process.env.API_KEY}`)
+        let candidates = data.candidates
+        // Promise.all waits until all promises resolve before returning the result of .map
+        let places = await Promise.all(candidates.map(async candidate=>{
+            let place = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${candidate.place_id}&key=${process.env.API_Key}`)
+            console.log(place.data)
+            return place.data
+        }))
+        res.json(places)
+    } catch (err) {
+        console.error(err);
+        res.set(500).send("An Error!")
+    }
 })
 
 // Get all cafes
@@ -95,5 +113,7 @@ router.delete("/api/cafes/:id", function (req, res) {
             res.set(500).send("An error!")
         })
 })
+
+
 
 module.exports = router;
