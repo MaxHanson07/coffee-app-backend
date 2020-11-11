@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 const Cafe = require("../models/cafeModel")
 
 // Route to seed database with coffee shops within 500m of my house
-app.get("/api/seed", async function (req, res) {
+router.get("/api/seed", async function (req, res) {
     let radius = "500"
     let response = await axios.get(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=47.649349, -122.321053&radius=${radius}&keyword=coffee&key=${process.env.API_Key}`)
     let placeIds = response.data.results.map(place => place.place_id)
