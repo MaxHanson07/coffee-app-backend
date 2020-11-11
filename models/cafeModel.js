@@ -13,7 +13,7 @@ const CafeSchema = new mongoose.Schema({
     lng: {
         type: Number
     },
-    address: {
+    formatted_address: {
         type: String
     },
     website: {
