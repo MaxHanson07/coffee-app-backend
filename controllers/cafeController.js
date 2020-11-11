@@ -135,7 +135,7 @@ router.get("/api/cafes", async function (req, res) {
 router.get("/api/cafes/:id", async function (req, res) {
     try {
         let result = await Cafe.find({ _id: mongoose.Types.ObjectId(req.params.id) })
-        res.json(result)
+        res.json(result[0])
     } catch (err) {
         console.error(err)
         res.set(500).send("An error has appeared!")
