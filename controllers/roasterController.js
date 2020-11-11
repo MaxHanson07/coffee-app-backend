@@ -11,7 +11,7 @@ router.get("/api/roasters", async function (req, res) {
         res.json(result)
     } catch (err) {
         console.error(err)
-        res.set(500).send("An error!")
+        res.set(500).send("And error has appeared!")
     }
 })
 
@@ -22,7 +22,7 @@ router.get("/api/roasters/:id", async function (req, res) {
         res.json(result)
     } catch (err) {
         console.error(err)
-        res.set(500).send("An error!")
+        res.set(500).send("And error has appeared!")
     }
 })
 
@@ -81,7 +81,7 @@ router.delete("/api/cafes/:id", async function (req, res) {
         res.json(result)
     } catch (err) {
         console.error(err)
-        res.set(500).send("An error!")
+        res.set(500).send("And error has appeared!")
     }
 })
 

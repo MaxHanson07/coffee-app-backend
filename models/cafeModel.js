@@ -39,7 +39,10 @@ const CafeSchema = new mongoose.Schema({
         },
         photos: [
             {}
-        ]
+        ],
+        likes: {
+            type: Number
+        }
     }
 });
 
