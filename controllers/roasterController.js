@@ -7,7 +7,7 @@ const Roaster = require("../models/roasterModel")
 // Get all roasters
 router.get("/api/roasters", async function (req, res) {
     try {
-        let result = await Roaster.find({})
+        let result = await Roaster.findOne({}).populate("cafes")
         res.json(result)
     } catch (err) {
         console.error(err)
@@ -18,7 +18,7 @@ router.get("/api/roasters", async function (req, res) {
 // Get one roaster
 router.get("/api/roasters/:id", async function (req, res) {
     try {
-        let result = await Roaster.find({ _id: mongoose.Types.ObjectId(req.params.id) })
+        let result = await Roaster.findOne({ _id: mongoose.Types.ObjectId(req.params.id) }).populate("cafes")
         res.json(result)
     } catch (err) {
         console.error(err)
