@@ -122,7 +122,6 @@ router.get("/api/places/search/:cafename", async function (req, res) {
 // Search our database by name and address
 router.get("/api/cafes/search/:nameaddress", async function (req, res) {
     try {
-        console.log(req.params.nameaddress);
         let nameAddressArr = req.params.nameaddress.split(", ");
         let name = nameAddressArr[0];
         let address = nameAddressArr[1];
