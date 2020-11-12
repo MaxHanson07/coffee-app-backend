@@ -26,6 +26,22 @@ router.get("/api/roasters/:id", async function (req, res) {
     }
 })
 
+// Search by roaster
+router.get("/api/roasters/search/:name", async function (req, res) {
+    try {
+        let roaster = await Roaster.findOne(
+            {
+                name: {
+                    $regex: req.params.name, $options: "i"
+                }
+            })
+        res.json(roaster)
+    } catch (err) {
+        console.error(err)
+        res.set(500).send("And error has appeared!")
+    }
+})
+
 // Add a roaster
 router.post("/api/roasters", async function (req, res) {
     console.log(req.body)
