@@ -3,7 +3,8 @@ const router = express.Router();
 const axios = require("axios")
 
 const mongoose = require("mongoose");
-const Cafe = require("../models/cafeModel")
+const Cafe = require("../models/cafeModel");
+const Roaster = require("../models/roasterModel");
 
 // Refresh the entire database 
 async function refreshDatabase() {
@@ -61,8 +62,6 @@ router.get("/api/seed", async function (req, res) {
                 weekday_text: weekday_text,
                 photos: place.data.result.photos, // Google stores a 'photo reference' instead of a url. Maybe we should convert before saving into database
                 custom_data: {
-                    roasters: [],
-                    photos: [],
                     likes: 0
                 }
             }
@@ -109,9 +108,9 @@ router.get("/api/cafes/search/:nameaddress", async function(req, res) {
                     formatted_address: { 
                         $regex: address, $options: "i" 
                     }
-                })
+                }).populate("custom_data.roaster")
         } else {
-            cafe = await Cafe.find({name: {$regex: name, $options: "i"}})
+            cafe = await Cafe.find({name: {$regex: name, $options: "i"}}).populate("custom_data.roaster")
         }
         res.send(cafe)
     } catch (err) {
@@ -123,7 +122,7 @@ router.get("/api/cafes/search/:nameaddress", async function(req, res) {
 // Get all cafes
 router.get("/api/cafes", async function (req, res) {
     try {
-        let result = await Cafe.find({})
+        let result = await Cafe.find({}).populate("custom_data.roaster")
         res.json(result)
     } catch (err) {
         console.error(err)
@@ -134,8 +133,8 @@ router.get("/api/cafes", async function (req, res) {
 // Get one cafe
 router.get("/api/cafes/:id", async function (req, res) {
     try {
-        let result = await Cafe.find({ _id: mongoose.Types.ObjectId(req.params.id) })
-        res.json(result[0])
+        let result = await Cafe.findOne({ _id: mongoose.Types.ObjectId(req.params.id) }).populate("custom_data.roasters")
+        res.json(result)
     } catch (err) {
         console.error(err)
         res.set(500).send("An error has appeared!")
@@ -197,12 +196,22 @@ router.put("/api/cafes/:id", async function (req, res) {
                 _id: mongoose.Types.ObjectId(req.params.id)
             },
             {
-                custom_data: {
-                    roasters: req.body.roasters, // As an array
-                    instagram_url: req.body.instagram_url,
-                    photos: req.body.photos // As an array
-                }
+                custom_data: req.body
             })
+        if (req.body.roasters) {
+            for (roaster_id of req.body.roasters) {
+                let result = await Roaster.findOneAndUpdate(
+                    {
+                        _id: mongoose.Types.ObjectId(roaster_id),
+                        cafes: {$ne: mongoose.Types.ObjectId(req.params.id)}
+                    },
+                    {
+                        $push: {cafes: mongoose.Types.ObjectId(req.params.id)}
+                    }
+                    )
+                console.log(result)
+            }
+        }
         res.json(updated)
     } catch (err) {
         console.error(err)
