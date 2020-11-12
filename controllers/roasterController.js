@@ -7,7 +7,7 @@ const Roaster = require("../models/roasterModel")
 // Get all roasters
 router.get("/api/roasters", async function (req, res) {
     try {
-        let result = await Roaster.findOne({}).populate("cafes")
+        let result = await Roaster.find({}).populate("cafes")
         res.json(result)
     } catch (err) {
         console.error(err)
@@ -29,7 +29,7 @@ router.get("/api/roasters/:id", async function (req, res) {
 // Search by roaster
 router.get("/api/roasters/search/:name", async function (req, res) {
     try {
-        let roaster = await Roaster.findOne(
+        let roaster = await Roaster.find(
             {
                 name: {
                     $regex: req.params.name, $options: "i"

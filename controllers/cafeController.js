@@ -127,7 +127,7 @@ router.get("/api/cafes/search/:nameaddress", async function (req, res) {
         let address = nameAddressArr[1];
         let cafe;
         if (address) {
-            cafe = await Cafe.findOne(
+            cafe = await Cafe.find(
                 {
                     name: {
                         $regex: name, $options: "i"
