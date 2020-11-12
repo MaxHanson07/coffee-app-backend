@@ -29,10 +29,12 @@ if (process.env.NODE_ENV === "production") {
 }
 
 // Import and use routes
-var cafeRoutes = require("./controllers/cafeController.js");
-var roasterRoutes = require("./controllers/roasterController.js");
+const cafeRoutes = require("./controllers/cafeController");
+const roasterRoutes = require("./controllers/roasterController");
+const requestRoutes = require("./controllers/requestController")
 app.use(cafeRoutes);
 app.use(roasterRoutes);
+app.use(requestRoutes);
 
 // Start listening
 app.listen(PORT, function () {

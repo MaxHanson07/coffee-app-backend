@@ -7,22 +7,38 @@ const Roaster = require("../models/roasterModel")
 // Get all roasters
 router.get("/api/roasters", async function (req, res) {
     try {
-        let result = await Roaster.find({})
+        let result = await Roaster.find({}).populate("cafes")
         res.json(result)
     } catch (err) {
         console.error(err)
-        res.set(500).send("An error!")
+        res.set(500).send("And error has appeared!")
     }
 })
 
 // Get one roaster
 router.get("/api/roasters/:id", async function (req, res) {
     try {
-        let result = await Roaster.find({ _id: mongoose.Types.ObjectId(req.params.id) })
+        let result = await Roaster.findOne({ _id: mongoose.Types.ObjectId(req.params.id) }).populate("cafes")
         res.json(result)
     } catch (err) {
         console.error(err)
-        res.set(500).send("An error!")
+        res.set(500).send("And error has appeared!")
+    }
+})
+
+// Search by roaster
+router.get("/api/roasters/search/:name", async function (req, res) {
+    try {
+        let roaster = await Roaster.find(
+            {
+                name: {
+                    $regex: req.params.name, $options: "i"
+                }
+            })
+        res.json(roaster)
+    } catch (err) {
+        console.error(err)
+        res.set(500).send("And error has appeared!")
     }
 })
 
@@ -81,7 +97,7 @@ router.delete("/api/cafes/:id", async function (req, res) {
         res.json(result)
     } catch (err) {
         console.error(err)
-        res.set(500).send("An error!")
+        res.set(500).send("And error has appeared!")
     }
 })
 
