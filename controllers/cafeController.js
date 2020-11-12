@@ -9,6 +9,7 @@ const Roaster = require("../models/roasterModel");
 // Function to convert Google's photo_references to urls
 async function convertReferencesToUrls(photoArray) {
     try {
+        console.log("Photo Array Slice: " + photoArray.slice(0,2))
         let photos = await Promise.all(photoArray.slice(0, 2).map(async photo => {
             let result = await axios.get(`https://maps.googleapis.com/maps/api/place/photo?photoreference=${photo.photo_reference}&maxheight=500&maxwidth=500&key=${process.env.API_KEY}`)
             let photoURL = "https://" + result.request.socket._host + result.request.socket._httpMessage.path
@@ -37,7 +38,7 @@ async function refreshDatabase() {
             }
             let photos;
             if (cafe.photos) {
-                photos = convertReferencesToUrls(cafe.photos)
+                photos = await convertReferencesToUrls(cafe.photos)
             }
             // Update the document in the database
             let result = await Cafe.findOneAndUpdate(
@@ -54,7 +55,7 @@ async function refreshDatabase() {
                     weekday_text: weekday_text,
                     photos: photos // Google stores a 'photo reference' instead of a url. Maybe we should convert before saving into database
                 })
-            console.log(`Updated ${cafeId._id}: ${result}`)
+            // console.log(`Updated ${cafeId._id}: ${result}`)
         }
     } catch (err) {
         console.error(err)
@@ -82,7 +83,7 @@ router.get("/api/seed", async function (req, res) {
             // Convert photo_references to urls
             let photos;
             if (place.data.result.photos) {
-                photos = convertReferencesToUrls(place.data.result.photos)
+                photos = await convertReferencesToUrls(place.data.result.photos)
             }
 
             let placeObj = {
@@ -205,7 +206,7 @@ router.post("/api/cafes", async function (req, res) {
             formatted_address: req.body.formatted_address,
             website: req.body.website,
             weekday_text: req.body.weekday_text, // Array of strings
-            photos: convertReferencesToUrls(req.body.photos), // Array
+            photos: await convertReferencesToUrls(req.body.photos), // Array
             custom_data: {
                 roasters: req.body.roasters,
                 photos: req.body.photos,
