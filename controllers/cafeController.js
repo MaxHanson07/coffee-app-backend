@@ -8,9 +8,27 @@ const Cafe = require("../models/cafeModel")
 // Refresh the entire database 
 async function refreshDatabase() {
     try {
+        // Get all cafes
         let cafeIds = await Cafe.find({}, '_id place_id')
+        // Iterate over the cafes and refresh data
         for (cafeId of cafeIds) {
             let place = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${cafeId.place_id}&fields=place_id,name,geometry/location/lat,geometry/location/lng,formatted_address,website,opening_hours/weekday_text,photos&key=${process.env.API_Key}`)
+            // Checking if there are recorded opening_hours before proceeding
+            let weekday_text;
+            if (place.data.result.opening_hours) {
+                weekday_text = place.data.result.opening_hours.weekday_text
+            }
+            // Convert photo_references to urls
+            let photos;
+            if (place.data.result.photos) {
+                photos = await Promise.all(place.data.result.photos.map(async photo => {
+                    let result = await axios.get(`https://maps.googleapis.com/maps/api/place/photo?photoreference=${photo.photo_reference}&maxheight=500&maxwidth=500&key=${process.env.API_KEY}`)
+                    let photoURL = "https://" + result.request.socket._host + result.request.socket._httpMessage.path
+                    photo.photo_url = photoURL
+                    return photo
+                }))
+            }
+            // Update the document in the database
             let result = await Cafe.findOneAndUpdate(
                 {
                     _id: mongoose.Types.ObjectId(cafeId._id)
@@ -22,8 +40,8 @@ async function refreshDatabase() {
                     lng: place.data.result.geometry.location.lng,
                     address: place.data.result.formatted_address,
                     website: place.data.result.website,
-                    weekday_text: place.data.result.opening_hours.weekday_text,
-                    photos: place.data.result.photos // Google stores a 'photo reference' instead of a url. Maybe we should convert before saving into database
+                    weekday_text: weekday_text,
+                    photos: photos // Google stores a 'photo reference' instead of a url. Maybe we should convert before saving into database
                 })
             console.log(`Updated ${cafeId._id}: ${result}`)
         }
@@ -41,16 +59,27 @@ router.get("/api/refresh", async function (req, res) {
 // Route to seed database with coffee shops within 500m of my house
 router.get("/api/seed", async function (req, res) {
     try {
-        let radius = "1000"
+        let radius = "500"
         let response = await axios.get(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=47.649349,%20-122.321053&radius=${radius}&keyword=coffee&key=${process.env.API_Key}`)
         let placeIds = response.data.results.map(place => place.place_id)
         for (id of placeIds) {
             let place = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${id}&fields=place_id,name,geometry/location/lat,geometry/location/lng,formatted_address,website,opening_hours/weekday_text,photos&key=${process.env.API_Key}`)
-            console.log(place.data)
             let weekday_text;
-            if (place.data.result.opening_hours){
+            if (place.data.result.opening_hours) {
                 weekday_text = place.data.result.opening_hours.weekday_text
-            } 
+            }
+            // Convert photo_references to urls
+            let photos;
+            if (place.data.result.photos) {
+                photos = await Promise.all(place.data.result.photos.map(async photo => {
+                    let result = await axios.get(`https://maps.googleapis.com/maps/api/place/photo?photoreference=${photo.photo_reference}&maxheight=500&maxwidth=500&key=${process.env.API_KEY}`)
+                    let photoURL = "https://" + result.request.socket._host + result.request.socket._httpMessage.path
+                    photo.photo_url = photoURL
+                    // console.log(photo)
+                    return photo
+                }))
+            }
+
             let placeObj = {
                 place_id: place.data.result.place_id,
                 name: place.data.result.name,
@@ -59,7 +88,7 @@ router.get("/api/seed", async function (req, res) {
                 formatted_address: place.data.result.formatted_address,
                 website: place.data.result.website,
                 weekday_text: weekday_text,
-                photos: place.data.result.photos, // Google stores a 'photo reference' instead of a url. Maybe we should convert before saving into database
+                photos: photos, // Google stores a 'photo reference' instead of a url. Maybe we should convert before saving into database
                 custom_data: {
                     roasters: [],
                     photos: [],
@@ -93,7 +122,7 @@ router.get("/api/places/search/:cafename", async function (req, res) {
 })
 
 // Search our database by name and address
-router.get("/api/cafes/search/:nameaddress", async function(req, res) {
+router.get("/api/cafes/search/:nameaddress", async function (req, res) {
     try {
         console.log(req.params.nameaddress);
         let nameAddressArr = req.params.nameaddress.split(", ");
@@ -103,15 +132,15 @@ router.get("/api/cafes/search/:nameaddress", async function(req, res) {
         if (address) {
             cafe = await Cafe.find(
                 {
-                    name: { 
-                        $regex: name, $options: "i" 
-                    }, 
-                    formatted_address: { 
-                        $regex: address, $options: "i" 
+                    name: {
+                        $regex: name, $options: "i"
+                    },
+                    formatted_address: {
+                        $regex: address, $options: "i"
                     }
                 })
         } else {
-            cafe = await Cafe.find({name: {$regex: name, $options: "i"}})
+            cafe = await Cafe.find({ name: { $regex: name, $options: "i" } })
         }
         res.send(cafe)
     } catch (err) {
@@ -221,6 +250,14 @@ router.delete("/api/cafes/:id", async function (req, res) {
     }
 })
 
+router.get("/api/photo", function (req, res) {
+    axios.get(`https://maps.googleapis.com/maps/api/place/photo?photoreference=${photoreference}&maxheight=400&maxwidth=400&key=${process.env.API_KEY}`)
+        .then(result => {
+            console.log(result.request.socket._host, result.request.socket._httpMessage.path)
+            res.json("https://" + result.request.socket._host + result.request.socket._httpMessage.path)
+        })
+        .catch(err => res.set(500).send("Error"))
+})
 
 
 module.exports = router;
