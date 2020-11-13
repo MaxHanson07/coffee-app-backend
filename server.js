@@ -23,11 +23,6 @@ mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/coffeedb", {
   useFindAndModify: false
  });
 
-// Serve up static assets when deployed
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static("client/build"));
-}
-
 // Import and use routes
 const cafeRoutes = require("./controllers/cafeController");
 const roasterRoutes = require("./controllers/roasterController");

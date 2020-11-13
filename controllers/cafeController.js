@@ -9,7 +9,7 @@ const Roaster = require("../models/roasterModel");
 // Function to convert Google's photo_references to urls
 async function convertReferencesToUrls(photoArray) {
     try {
-        console.log("Photo Array Slice: " + photoArray.slice(0,2))
+        console.log("Photo Array Slice: " + photoArray.slice(0, 2))
         let photos = await Promise.all(photoArray.slice(0, 2).map(async photo => {
             let result = await axios.get(`https://maps.googleapis.com/maps/api/place/photo?photoreference=${photo.photo_reference}&maxheight=500&maxwidth=500&key=${process.env.API_KEY}`)
             let photoURL = "https://" + result.request.socket._host + result.request.socket._httpMessage.path
@@ -94,7 +94,7 @@ router.get("/api/seed", async function (req, res) {
                 formatted_address: place.data.result.formatted_address,
                 website: place.data.result.website,
                 weekday_text: weekday_text,
-                photos: photos, 
+                photos: photos,
                 custom_data: {
                     likes: 0
                 }
@@ -264,13 +264,14 @@ router.delete("/api/cafes/:id", async function (req, res) {
     }
 })
 
-router.get("/api/photo", function (req, res) {
-    axios.get(`https://maps.googleapis.com/maps/api/place/photo?photoreference=${photoreference}&maxheight=400&maxwidth=400&key=${process.env.API_KEY}`)
-        .then(result => {
-            console.log(result.request.socket._host, result.request.socket._httpMessage.path)
-            res.json("https://" + result.request.socket._host + result.request.socket._httpMessage.path)
-        })
-        .catch(err => res.set(500).send("Error"))
+// Return photo url from photo reference
+router.post("/api/photos", async function (req, res) {
+    try {
+        let photosWithUrls = await convertReferencesToUrls(req.body.photos)
+        res.json(photosWithUrls)
+    } catch (err) {
+    res.set(500).send("Error")
+}
 })
 
 
