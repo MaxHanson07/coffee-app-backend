@@ -176,7 +176,7 @@ router.get("/api/cafes/:id", async function (req, res) {
 })
 
 // Increment the likes for a given cafe
-router.get("/api/cafes/like/:id", async function (req, res) {
+router.put("/api/cafes/like/:id", async function (req, res) {
     try {
         let result = await Cafe.findOneAndUpdate(
             {
@@ -184,6 +184,9 @@ router.get("/api/cafes/like/:id", async function (req, res) {
             },
             {
                 $inc: { "custom_data.likes": 1 }
+            },
+            {
+                new: true
             })
         if (result) {
             res.send(`_id:${req.params.id} updated`)
@@ -227,12 +230,18 @@ router.post("/api/cafes", async function (req, res) {
 // Edit a cafe
 router.put("/api/cafes/:id", async function (req, res) {
     try {
+        console.log(req.body)
         let updated = await Cafe.findOneAndUpdate(
             {
                 _id: mongoose.Types.ObjectId(req.params.id)
             },
             {
-                custom_data: req.body
+                ...req.body,
+                'custom_data.roasters': req.body.roasters,
+                'custom_data.instagram_url': req.body.instagram_url
+            },
+            {
+                new: true
             })
         if (req.body.roasters) {
             for (roaster_id of req.body.roasters) {
@@ -272,8 +281,8 @@ router.post("/api/photos", async function (req, res) {
         let photosWithUrls = await convertReferencesToUrls(req.body.photos)
         res.json(photosWithUrls)
     } catch (err) {
-    res.set(500).send("Error")
-}
+        res.set(500).send("Error")
+    }
 })
 
 
