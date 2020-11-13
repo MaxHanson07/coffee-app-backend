@@ -43,6 +43,10 @@ const CafeSchema = new mongoose.Schema({
         likes: {
             type: Number
         }
+    },
+    is_featured: {
+        type: Boolean,
+        default: false
     }
 });
 
