@@ -27,6 +27,9 @@ const CafeSchema = new mongoose.Schema({
     photos: [
         {}
     ],
+    formatted_phone_number: {
+        type: String
+    },
     custom_data: {
         roasters: [
             {
