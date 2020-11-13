@@ -75,7 +75,7 @@ router.get("/api/seed", async function (req, res) {
         let response = await axios.get(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=47.649349,%20-122.321053&radius=${radius}&keyword=coffee&key=${process.env.API_KEY}`)
         let placeIds = response.data.results.map(place => place.place_id)
         for (id of placeIds) {
-            let place = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${id}&fields=place_id,name,geometry/location/lat,geometry/location/lng,formatted_address,website,opening_hours/weekday_text,photos&key=${process.env.API_Key}`)
+            let place = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${id}&fields=formatted_phone_number,place_id,name,geometry/location/lat,geometry/location/lng,formatted_address,website,opening_hours/weekday_text,photos&key=${process.env.API_Key}`)
             let weekday_text;
             if (place.data.result.opening_hours) {
                 weekday_text = place.data.result.opening_hours.weekday_text
@@ -95,6 +95,7 @@ router.get("/api/seed", async function (req, res) {
                 website: place.data.result.website,
                 weekday_text: weekday_text,
                 photos: photos,
+                formatted_phone_number: place.data.result.formatted_phone_number,
                 custom_data: {
                     likes: 0
                 }
@@ -207,6 +208,7 @@ router.post("/api/cafes", async function (req, res) {
             website: req.body.website,
             weekday_text: req.body.weekday_text, // Array of strings
             photos: await convertReferencesToUrls(req.body.photos), // Array
+            formatted_phone_number: req.body.formatted_phone_number,
             custom_data: {
                 roasters: req.body.roasters,
                 photos: req.body.photos,
