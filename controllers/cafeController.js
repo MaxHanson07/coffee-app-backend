@@ -142,9 +142,9 @@ router.get("/api/cafes/search/:nameaddress", async function (req, res) {
                     formatted_address: {
                         $regex: address, $options: "i"
                     }
-                }).populate("custom_data.roaster")
+                }).populate("custom_data.roasters")
         } else {
-            cafe = await Cafe.find({ name: { $regex: name, $options: "i" } }).populate("custom_data.roaster")
+            cafe = await Cafe.find({ name: { $regex: name, $options: "i" } }).populate("custom_data.roasters")
         }
         res.send(cafe)
     } catch (err) {
@@ -156,7 +156,7 @@ router.get("/api/cafes/search/:nameaddress", async function (req, res) {
 // Get all cafes
 router.get("/api/cafes", async function (req, res) {
     try {
-        let result = await Cafe.find({}).populate("custom_data.roaster")
+        let result = await Cafe.find({}).populate("custom_data.roasters")
         res.json(result)
     } catch (err) {
         console.error(err)
