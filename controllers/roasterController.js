@@ -91,7 +91,7 @@ router.put("/api/roasters/:id", async function (req, res) {
 })
 
 // Delete a roaster
-router.delete("/api/cafes/:id", async function (req, res) {
+router.delete("/api/roasters/:id", async function (req, res) {
     try {
         let result = await Roaster.deleteOne({ _id: mongoose.Types.ObjectId(req.params.id) })
         res.json(result)
