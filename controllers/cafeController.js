@@ -9,7 +9,6 @@ const Roaster = require("../models/roasterModel");
 // Function to convert Google's photo_references to urls
 async function convertReferencesToUrls(photoArray) {
     try {
-        console.log("Photo Array Slice: " + photoArray.slice(0, 2))
         let photos = await Promise.all(photoArray.slice(0, 2).map(async photo => {
             let result = await axios.get(`https://maps.googleapis.com/maps/api/place/photo?photoreference=${photo.photo_reference}&maxheight=500&maxwidth=500&key=${process.env.API_KEY}`)
             let photoURL = "https://" + result.request.socket._host + result.request.socket._httpMessage.path
@@ -96,9 +95,9 @@ router.get("/api/seed", async function (req, res) {
                 weekday_text: weekday_text,
                 photos: photos,
                 formatted_phone_number: place.data.result.formatted_phone_number,
-                custom_data: {
-                    likes: 0
-                }
+                likes: 0,
+                roasters: [],
+                custom_photos: []
             }
             Cafe.create(placeObj)
         }
@@ -142,10 +141,11 @@ router.get("/api/cafes/search/:nameaddress", async function (req, res) {
                     formatted_address: {
                         $regex: address, $options: "i"
                     }
-                }).populate("custom_data.roasters")
+                }).populate("roasters")
         } else {
-            cafe = await Cafe.find({ name: { $regex: name, $options: "i" } }).populate("custom_data.roasters")
+            cafe = await Cafe.find({ name: { $regex: name, $options: "i" } }).populate("roasters")
         }
+        console.log(cafe)
         res.send(cafe)
     } catch (err) {
         console.error(err);
@@ -156,7 +156,7 @@ router.get("/api/cafes/search/:nameaddress", async function (req, res) {
 // Get all cafes
 router.get("/api/cafes", async function (req, res) {
     try {
-        let result = await Cafe.find({}).populate("custom_data.roasters")
+        let result = await Cafe.find({}).populate("roasters")
         res.json(result)
     } catch (err) {
         console.error(err)
@@ -167,7 +167,7 @@ router.get("/api/cafes", async function (req, res) {
 // Get one cafe
 router.get("/api/cafes/:id", async function (req, res) {
     try {
-        let result = await Cafe.findOne({ _id: mongoose.Types.ObjectId(req.params.id) }).populate("custom_data.roasters")
+        let result = await Cafe.findOne({ _id: mongoose.Types.ObjectId(req.params.id) }).populate("roasters")
         res.json(result)
     } catch (err) {
         console.error(err)
@@ -183,7 +183,7 @@ router.put("/api/cafes/like/:id", async function (req, res) {
                 _id: mongoose.Types.ObjectId(req.params.id)
             },
             {
-                $inc: { "custom_data.likes": 1 }
+                $inc: { likes: 1 }
             },
             {
                 new: true
@@ -202,24 +202,12 @@ router.put("/api/cafes/like/:id", async function (req, res) {
 // Add a cafe
 router.post("/api/cafes", async function (req, res) {
     try {
-        let placeObj = {
-            place_id: req.body.place_id,
-            name: req.body.name,
-            lat: req.body.lat,
-            lng: req.body.lng,
-            formatted_address: req.body.formatted_address,
-            website: req.body.website,
-            weekday_text: req.body.weekday_text, // Array of strings
-            photos: await convertReferencesToUrls(req.body.photos), // Array
-            formatted_phone_number: req.body.formatted_phone_number,
-            custom_data: {
-                roasters: req.body.roasters,
-                photos: req.body.photos,
-                likes: 0,
-                instagram_url: req.body.instagram_url
-            }
-        }
-        let result = await Cafe.create(placeObj)
+        let cafe = req.body
+        console.log(cafe)
+        cafe.likes = 0
+        cafe.photos = await convertReferencesToUrls(cafe.photos)
+        cafe.roasters = cafe.roasters.map(roaster=>mongoose.Types.ObjectId(roaster))
+        let result = await Cafe.create(cafe)
         res.json(result)
     } catch (err) {
         console.error(err)
@@ -235,11 +223,7 @@ router.put("/api/cafes/:id", async function (req, res) {
             {
                 _id: mongoose.Types.ObjectId(req.params.id)
             },
-            {
-                ...req.body,
-                'custom_data.roasters': req.body.roasters,
-                'custom_data.instagram_url': req.body.instagram_url
-            },
+            req.body,
             {
                 new: true
             })
@@ -252,6 +236,9 @@ router.put("/api/cafes/:id", async function (req, res) {
                     },
                     {
                         $push: { cafes: mongoose.Types.ObjectId(req.params.id) }
+                    },
+                    {
+                        new: true
                     }
                 )
                 console.log(result)
