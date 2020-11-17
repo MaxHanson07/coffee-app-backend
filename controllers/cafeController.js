@@ -25,9 +25,10 @@ async function convertReferencesToUrls(photoArray) {
 router.get("/api/places/search/:cafename", async function (req, res) {
     try {
         let { data } = await axios.get(`https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${req.params.cafename}&inputtype=textquery&key=${process.env.API_KEY}`)
-        if (data.status === 'REQUEST_DENIED') {
+        if (data.status !== 'OK') {
             throw ("Google Places Error! : " + data.error_message)
         }
+        console.log(data)
         let candidates = data.candidates
         // Promise.all waits until all promises resolve before returning the result of .map
         let places = await Promise.all(candidates.map(async candidate => {
@@ -37,7 +38,7 @@ router.get("/api/places/search/:cafename", async function (req, res) {
         res.json(places)
     } catch (err) {
         console.error(err);
-        res.status(500).send("An error has appeared!")
+        res.status(400).send(err)
     }
 })
 

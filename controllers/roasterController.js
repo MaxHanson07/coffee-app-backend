@@ -35,10 +35,13 @@ router.get("/api/roasters/search/:name", async function (req, res) {
                     $regex: req.params.name, $options: "i"
                 }
             })
+        if (roaster.length < 1) {
+            throw("No roasters found")
+        }
         res.json(roaster)
     } catch (err) {
         console.error(err)
-        res.status(500).send("And error has appeared!")
+        res.status(404).send(err)
     }
 })
 
