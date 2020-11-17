@@ -26,12 +26,12 @@ router.get("/api/places/search/:cafename", async function (req, res) {
     try {
         let { data } = await axios.get(`https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${req.params.cafename}&inputtype=textquery&key=${process.env.API_KEY}`)
         if (data.status === 'REQUEST_DENIED') {
-            throw("Google Places Error! : " + data.error_message)
+            throw ("Google Places Error! : " + data.error_message)
         }
         let candidates = data.candidates
         // Promise.all waits until all promises resolve before returning the result of .map
         let places = await Promise.all(candidates.map(async candidate => {
-            let { data } = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${candidate.place_id}&fields=place_id,name,geometry/location/lat,geometry/location/lng,formatted_address,website,opening_hours/weekday_text,photos&key=${process.env.API_Key}`)
+            let { data } = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${candidate.place_id}&fields=place_id,name,geometry/location/lat,geometry/location/lng,formatted_address,website,opening_hours/weekday_text,photos&key=${process.env.API_KEY}`)
             return data
         }))
         res.json(places)
@@ -61,10 +61,10 @@ router.get("/api/cafes/search/:nameaddress", async function (req, res) {
         } else {
             cafe = await Cafe.find({ name: { $regex: name, $options: "i" } }).populate("roasters")
         }
-    if (cafe.length < 1) {
-        throw("No results")
-    }
-    res.send(cafe)
+        if (cafe.length < 1) {
+            throw ("No results")
+        }
+        res.send(cafe)
     } catch (err) {
         console.error(err);
         res.status(404).send(err)
@@ -123,7 +123,7 @@ router.post("/api/cafes", async function (req, res) {
         let cafe = req.body
         cafe.likes = 0
         if (cafe.roasters) {
-            cafe.roasters = cafe.roasters.map(roaster=>mongoose.Types.ObjectId(roaster))
+            cafe.roasters = cafe.roasters.map(roaster => mongoose.Types.ObjectId(roaster))
         }
         let result = await Cafe.create(cafe)
         res.json(result)
@@ -146,7 +146,7 @@ router.put("/api/cafes/:id", async function (req, res) {
             })
         if (req.body.roasters) {
             for (roaster_id of req.body.roasters) {
-                let result = await Roaster.findOneAndUpdate(
+                await Roaster.findOneAndUpdate(
                     {
                         _id: mongoose.Types.ObjectId(roaster_id),
                         cafes: { $ne: mongoose.Types.ObjectId(req.params.id) }
