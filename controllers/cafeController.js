@@ -9,7 +9,6 @@ const Roaster = require("../models/roasterModel");
 // Function to convert Google's photo_references to urls
 async function convertReferencesToUrls(photoArray) {
     try {
-        console.log("Photo Array Slice: " + photoArray.slice(0, 2))
         let photos = await Promise.all(photoArray.slice(0, 2).map(async photo => {
             let result = await axios.get(`https://maps.googleapis.com/maps/api/place/photo?photoreference=${photo.photo_reference}&maxheight=500&maxwidth=500&key=${process.env.API_KEY}`)
             let photoURL = "https://" + result.request.socket._host + result.request.socket._httpMessage.path
@@ -75,7 +74,7 @@ router.get("/api/seed", async function (req, res) {
         let response = await axios.get(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=47.649349,%20-122.321053&radius=${radius}&keyword=coffee&key=${process.env.API_KEY}`)
         let placeIds = response.data.results.map(place => place.place_id)
         for (id of placeIds) {
-            let place = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${id}&fields=place_id,name,geometry/location/lat,geometry/location/lng,formatted_address,website,opening_hours/weekday_text,photos&key=${process.env.API_Key}`)
+            let place = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${id}&fields=formatted_phone_number,place_id,name,geometry/location/lat,geometry/location/lng,formatted_address,website,opening_hours/weekday_text,photos&key=${process.env.API_Key}`)
             let weekday_text;
             if (place.data.result.opening_hours) {
                 weekday_text = place.data.result.opening_hours.weekday_text
@@ -95,9 +94,10 @@ router.get("/api/seed", async function (req, res) {
                 website: place.data.result.website,
                 weekday_text: weekday_text,
                 photos: photos,
-                custom_data: {
-                    likes: 0
-                }
+                formatted_phone_number: place.data.result.formatted_phone_number,
+                likes: 0,
+                roasters: [],
+                custom_photos: []
             }
             Cafe.create(placeObj)
         }
@@ -141,10 +141,11 @@ router.get("/api/cafes/search/:nameaddress", async function (req, res) {
                     formatted_address: {
                         $regex: address, $options: "i"
                     }
-                }).populate("custom_data.roaster")
+                }).populate("roasters")
         } else {
-            cafe = await Cafe.find({ name: { $regex: name, $options: "i" } }).populate("custom_data.roaster")
+            cafe = await Cafe.find({ name: { $regex: name, $options: "i" } }).populate("roasters")
         }
+        console.log(cafe)
         res.send(cafe)
     } catch (err) {
         console.error(err);
@@ -155,7 +156,7 @@ router.get("/api/cafes/search/:nameaddress", async function (req, res) {
 // Get all cafes
 router.get("/api/cafes", async function (req, res) {
     try {
-        let result = await Cafe.find({}).populate("custom_data.roaster")
+        let result = await Cafe.find({}).populate("roasters")
         res.json(result)
     } catch (err) {
         console.error(err)
@@ -166,7 +167,7 @@ router.get("/api/cafes", async function (req, res) {
 // Get one cafe
 router.get("/api/cafes/:id", async function (req, res) {
     try {
-        let result = await Cafe.findOne({ _id: mongoose.Types.ObjectId(req.params.id) }).populate("custom_data.roasters")
+        let result = await Cafe.findOne({ _id: mongoose.Types.ObjectId(req.params.id) }).populate("roasters")
         res.json(result)
     } catch (err) {
         console.error(err)
@@ -175,14 +176,17 @@ router.get("/api/cafes/:id", async function (req, res) {
 })
 
 // Increment the likes for a given cafe
-router.get("/api/cafes/like/:id", async function (req, res) {
+router.put("/api/cafes/like/:id", async function (req, res) {
     try {
         let result = await Cafe.findOneAndUpdate(
             {
                 _id: mongoose.Types.ObjectId(req.params.id)
             },
             {
-                $inc: { "custom_data.likes": 1 }
+                $inc: { likes: 1 }
+            },
+            {
+                new: true
             })
         if (result) {
             res.send(`_id:${req.params.id} updated`)
@@ -198,23 +202,13 @@ router.get("/api/cafes/like/:id", async function (req, res) {
 // Add a cafe
 router.post("/api/cafes", async function (req, res) {
     try {
-        let placeObj = {
-            place_id: req.body.place_id,
-            name: req.body.name,
-            lat: req.body.lat,
-            lng: req.body.lng,
-            formatted_address: req.body.formatted_address,
-            website: req.body.website,
-            weekday_text: req.body.weekday_text, // Array of strings
-            photos: await convertReferencesToUrls(req.body.photos), // Array
-            custom_data: {
-                roasters: req.body.roasters,
-                photos: req.body.photos,
-                likes: 0,
-                instagram_url: req.body.instagram_url
-            }
+        let cafe = req.body
+        console.log(cafe)
+        cafe.likes = 0
+        if (cafe.roasters) {
+            cafe.roasters = cafe.roasters.map(roaster=>mongoose.Types.ObjectId(roaster))
         }
-        let result = await Cafe.create(placeObj)
+        let result = await Cafe.create(cafe)
         res.json(result)
     } catch (err) {
         console.error(err)
@@ -225,12 +219,14 @@ router.post("/api/cafes", async function (req, res) {
 // Edit a cafe
 router.put("/api/cafes/:id", async function (req, res) {
     try {
+        console.log(req.body)
         let updated = await Cafe.findOneAndUpdate(
             {
                 _id: mongoose.Types.ObjectId(req.params.id)
             },
+            req.body,
             {
-                custom_data: req.body
+                new: true
             })
         if (req.body.roasters) {
             for (roaster_id of req.body.roasters) {
@@ -241,6 +237,9 @@ router.put("/api/cafes/:id", async function (req, res) {
                     },
                     {
                         $push: { cafes: mongoose.Types.ObjectId(req.params.id) }
+                    },
+                    {
+                        new: true
                     }
                 )
                 console.log(result)
@@ -270,8 +269,8 @@ router.post("/api/photos", async function (req, res) {
         let photosWithUrls = await convertReferencesToUrls(req.body.photos)
         res.json(photosWithUrls)
     } catch (err) {
-    res.set(500).send("Error")
-}
+        res.set(500).send("Error")
+    }
 })
 
 

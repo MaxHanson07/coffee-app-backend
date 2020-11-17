@@ -27,22 +27,23 @@ const CafeSchema = new mongoose.Schema({
     photos: [
         {}
     ],
-    custom_data: {
-        roasters: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Roaster"
-            }
-        ],
-        instagram_url: {
-            type: String
-        },
-        photos: [
-            {}
-        ],
-        likes: {
-            type: Number
+    formatted_phone_number: {
+        type: String
+    },
+    roasters: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Roaster"
         }
+    ],
+    instagram_url: {
+        type: String
+    },
+    custom_photos: [
+        {}
+    ],
+    likes: {
+        type: Number
     },
     is_featured: {
         type: Boolean,
