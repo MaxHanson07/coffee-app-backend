@@ -25,6 +25,7 @@ async function convertReferencesToUrls(photoArray) {
 router.get("/api/places/search/:cafename", async function (req, res) {
     try {
         let { data } = await axios.get(`https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${req.params.cafename}&inputtype=textquery&key=${process.env.API_KEY}`)
+        console.log(data)
         if (data.status === 'REQUEST_DENIED') {
             throw("Google Places Error! : " + data.error_message)
         }
