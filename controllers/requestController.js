@@ -11,7 +11,7 @@ router.get("/api/requests", async function (req, res) {
         res.json(requests)
     } catch (err) {
         console.error(err);
-        res.set(500).send("An error has appeared!")
+        res.status(500).send("An error has appeared!")
     }
 })
 
@@ -22,7 +22,7 @@ router.get("/api/requests/:id", async function(req, res){
         res.json(result)
     } catch (err) {
         console.error(err)
-        res.set(500).send("An error has appeared!")
+        res.status(500).send("An error has appeared!")
     }
 })
 
@@ -41,7 +41,7 @@ router.post("/api/requests", async function (req, res) {
         res.json(result)
     } catch (err) {
         console.error(err);
-        res.set(500).send("An error has appeared!")
+        res.status(500).send("An error has appeared!")
     }
 })
 
@@ -52,7 +52,7 @@ router.delete("/api/requests/:id", async function(req, res){
         res.json(result)
     } catch (err) {
         console.error(err)
-        res.set(500).send("An error has appeared!")
+        res.status(500).send("An error has appeared!")
     }
 })
 
