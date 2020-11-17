@@ -205,8 +205,9 @@ router.post("/api/cafes", async function (req, res) {
         let cafe = req.body
         console.log(cafe)
         cafe.likes = 0
-        cafe.photos = await convertReferencesToUrls(cafe.photos)
-        cafe.roasters = cafe.roasters.map(roaster=>mongoose.Types.ObjectId(roaster))
+        if (cafe.roasters) {
+            cafe.roasters = cafe.roasters.map(roaster=>mongoose.Types.ObjectId(roaster))
+        }
         let result = await Cafe.create(cafe)
         res.json(result)
     } catch (err) {
