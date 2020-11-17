@@ -31,7 +31,7 @@ router.get("/api/places/search/:cafename", async function (req, res) {
         let candidates = data.candidates
         // Promise.all waits until all promises resolve before returning the result of .map
         let places = await Promise.all(candidates.map(async candidate => {
-            let { data } = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${candidate.place_id}&fields=place_id,name,geometry/location/lat,geometry/location/lng,formatted_address,website,opening_hours/weekday_text,photos&key=${process.env.API_KEY}`)
+            let { data } = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${candidate.place_id}&fields=place_id,name,geometry/location/lat,geometry/location/lng,formatted_address,website,opening_hours/weekday_text,photos,formatted_phone_number&key=${process.env.API_KEY}`)
             return data
         }))
         res.json(places)
