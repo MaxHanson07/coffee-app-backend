@@ -11,7 +11,7 @@ router.get("/api/roasters", async function (req, res) {
         res.json(result)
     } catch (err) {
         console.error(err)
-        res.set(500).send("And error has appeared!")
+        res.status(500).send("And error has appeared!")
     }
 })
 
@@ -22,7 +22,7 @@ router.get("/api/roasters/:id", async function (req, res) {
         res.json(result)
     } catch (err) {
         console.error(err)
-        res.set(500).send("And error has appeared!")
+        res.status(500).send("And error has appeared!")
     }
 })
 
@@ -38,13 +38,12 @@ router.get("/api/roasters/search/:name", async function (req, res) {
         res.json(roaster)
     } catch (err) {
         console.error(err)
-        res.set(500).send("And error has appeared!")
+        res.status(500).send("And error has appeared!")
     }
 })
 
 // Add a roaster
 router.post("/api/roasters", async function (req, res) {
-    console.log(req.body)
     try {
         let newRoaster = await Roaster.create({
             name: req.body.name,
@@ -55,7 +54,7 @@ router.post("/api/roasters", async function (req, res) {
         res.json(newRoaster)
     } catch (err) {
         console.error(err)
-        res.set(500).send("Server error")
+        res.status(500).send("Server error")
     }
 })
 
@@ -63,7 +62,7 @@ router.post("/api/roasters", async function (req, res) {
 router.put("/api/roasters/:id", async function (req, res) {
     try {
         if (req.body.cafeId) {
-            let updated = await Roaster.findOneAndUpdate({
+            await Roaster.findOneAndUpdate({
                 _id: mongoose.Types.ObjectId(req.params.id)
             },
                 {
@@ -86,7 +85,7 @@ router.put("/api/roasters/:id", async function (req, res) {
         res.json(updated)
     } catch (err) {
         console.error(err)
-        res.set(500).send(err)
+        res.status(500).send(err)
     }
 })
 
@@ -97,7 +96,7 @@ router.delete("/api/roasters/:id", async function (req, res) {
         res.json(result)
     } catch (err) {
         console.error(err)
-        res.set(500).send("And error has appeared!")
+        res.status(500).send("And error has appeared!")
     }
 })
 
