@@ -9,7 +9,8 @@ require('dotenv').config();
 const app = express();
 
 // Run middleware
-app.use(cors())
+
+app.use(cors());
 app.use(logger("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
