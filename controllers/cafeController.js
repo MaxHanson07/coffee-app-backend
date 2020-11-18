@@ -96,13 +96,14 @@ router.get("/api/cafes/:id", async function (req, res) {
 
 // Increment the likes for a given cafe
 router.put("/api/cafes/like/:id", async function (req, res) {
+    console.log("Req: " + req.body.likeValue)
     try {
         let result = await Cafe.findOneAndUpdate(
             {
                 _id: mongoose.Types.ObjectId(req.params.id)
             },
             {
-                $inc: { likes: 1 }
+                $inc: { likes: req.body.likeValue }
             },
             {
                 new: true
