@@ -21,6 +21,17 @@ const OauthUserSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: "Cafe"
         }
+    ],
+    check_ins: [
+        {
+            cafe_id: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Cafe"
+            },
+            timestamp: {
+                type: Date
+            }
+        }
     ]
 });
 

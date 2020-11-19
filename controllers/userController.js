@@ -2,6 +2,9 @@ const express = require("express");
 const router = express.Router();
 const User = require('../models/userModel')
 const OAuthUser = require("../models/oauthUserModel");
+// const Cafe = require("../models/cafeModel");
+const mongoose = require("mongoose");
+
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require('google-auth-library');
@@ -45,7 +48,7 @@ router.post("/api/users/oauth", async function (req, res) {
         const token = req.body.tokenId
         const userInfo = await verify(token)
         console.log("token: ", userInfo)
-        let result = await (await OAuthUser.findOne({user_id: userInfo.user_id}))
+        let result = await (await OAuthUser.findOne({ user_id: userInfo.user_id }))
         if (!result) {
             result = await OAuthUser.create(userInfo)
         }
@@ -56,20 +59,44 @@ router.post("/api/users/oauth", async function (req, res) {
     }
 })
 
+
+// Unused route to like a cafe
 router.post("/api/users/cafes/:cafeId", async function (req, res) {
     try {
         let updated = OAuthUser.findOneAndUpdate(
             {
                 user_id: req.body.user_id
-            }, 
+            },
             {
-                $push : {liked_cafes: req.params.cafeId},
+                $push: { liked_cafes: req.params.cafeId },
                 new: true
             })
         res.json(updated)
     } catch (err) {
         console.error(err)
         res.status(500).send(err)
+    }
+})
+
+// Route to check in at a cafe
+router.post("/api/users/checkin/:cafeId", async function (req, res) {
+    try {
+        let checkInObj = {
+            liked_cafes: mongoose.Types.ObjectId(req.params.cafeId),
+            timestamp: req.body.date
+        }
+        console.log(checkInObj)
+        let success = await OAuthUser.findOneAndUpdate({ user_id: req.body.user_id },
+            {
+                $push: {
+                    check_ins: checkInObj
+                },
+            }
+        )
+        res.json(success.toJSON())
+    } catch (err) {
+        console.error(err)
+        res.status(500).send("Error!")
     }
 })
 
