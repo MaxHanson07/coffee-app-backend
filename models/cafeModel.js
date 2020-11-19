@@ -48,6 +48,10 @@ const CafeSchema = new mongoose.Schema({
     is_featured: {
         type: Boolean,
         default: false
+    },
+    check_ins: {
+        type: Number,
+        default: 0
     }
 });
 
