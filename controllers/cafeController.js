@@ -142,9 +142,9 @@ router.put("/api/cafes/like/:id", async function (req, res) {
 // Add a cafe
 router.post("/api/cafes", async function (req, res) {
     const loggedInUser = checkAuthStatus(req);
-    if(!loggedInUser){
-        return res.status(401).send("Must be logged in")
-    }
+    // if(!loggedInUser){
+    //     return res.status(401).send("Must be logged in")
+    // }
     console.log(loggedInUser);
     try {
         let cafe = req.body
@@ -163,9 +163,10 @@ router.post("/api/cafes", async function (req, res) {
 // Edit a cafe
 router.put("/api/cafes/:id", async function (req, res) {
     const loggedInUser = checkAuthStatus(req);
-    if(!loggedInUser){
-        return res.status(401).send("Must be logged in")
-    }
+    // if(!loggedInUser){
+    //     return res.status(401).send("Must be logged in")
+    // }
+    console.log(loggedInUser);
     try {
         let updated = await Cafe.findOneAndUpdate(
             {
@@ -201,9 +202,10 @@ router.put("/api/cafes/:id", async function (req, res) {
 // Delete a cafe
 router.delete("/api/cafes/:id", async function (req, res) {
     const loggedInUser = checkAuthStatus(req);
-    if(!loggedInUser){
-        return res.status(401).send("Must be logged in")
-    }
+    // if(!loggedInUser){
+    //     return res.status(401).send("Must be logged in")
+    // }
+    console.log(loggedInUser);
     try {
         let result = await Cafe.deleteOne({ _id: mongoose.Types.ObjectId(req.params.id) })
         res.json(result)
@@ -216,9 +218,10 @@ router.delete("/api/cafes/:id", async function (req, res) {
 // Return photo url from photo reference
 router.post("/api/photos", async function (req, res) {
     const loggedInUser = checkAuthStatus(req);
-    if(!loggedInUser){
-        return res.status(401).send("Must be logged in")
-    }
+    // if(!loggedInUser){
+    //     return res.status(401).send("Must be logged in")
+    // }
+    console.log(loggedInUser);
     try {
         let photosWithUrls = await convertReferencesToUrls(req.body.photos)
         res.json(photosWithUrls)

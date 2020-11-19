@@ -1,8 +1,25 @@
 const express = require("express");
 const router = express.Router();
-const db = require('../models')
+const User = require('../models/userModel')
+const OAuthUser = require("../models/oauthUserModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client("280932498066-hj1erov9gsausin5g9v06g8j90md2egm.apps.googleusercontent.com");
+
+async function verify(token) {
+    const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: "280932498066-hj1erov9gsausin5g9v06g8j90md2egm.apps.googleusercontent.com",
+    });
+    const payload = ticket.getPayload();
+    return {
+        user_id: payload.sub,
+        name: payload.name,
+        photo_url: payload.picture,
+        email: payload.email
+    }
+}
 
 const checkAuthStatus = request => {
     console.log(request.headers);
@@ -23,8 +40,24 @@ const checkAuthStatus = request => {
     return loggedInUser
 }
 
-router.get("/", (req, res) => {
-    db.User.findAll().then(dbUsers => {
+router.post("/api/users/oauth", async function (req, res) {
+    try {
+        const token = req.body.tokenId
+        const userInfo = await verify(token)
+        console.log("token: ", userInfo)
+        let result = await OAuthUser.findOne({user_id: userInfo.user_id})
+        if (!result) {
+            result = await OAuthUser.create(userInfo)
+        }
+        console.log("Database Entry: " + result)
+        res.send(result)
+    } catch (err) {
+        console.error(err)
+    }
+})
+
+router.get("/users", (req, res) => {
+    User.find().then(dbUsers => {
         res.json(dbUsers);
     }).catch(err => {
         console.log(err);
@@ -32,9 +65,9 @@ router.get("/", (req, res) => {
     })
 })
 
-router.post("/", (req, res) => {
-    db.User.create({
-        email: req.body.email,
+router.post("/signup", (req, res) => {
+    User.create({
+        // email: req.body.email,
         name: req.body.name,
         password: req.body.password
     }).then(newUser => {
@@ -46,7 +79,7 @@ router.post("/", (req, res) => {
 })
 
 router.post("/login", (req, res) => {
-    db.User.findOne({
+    User.findOne({
         where: {
             email: req.body.email,
         }
@@ -74,15 +107,10 @@ router.get("/secretProfile", (req, res) => {
     if (!loggedInUser) {
         return res.status(401).send("invalid token")
     }
-    db.User.findOne({
+    User.findOne({
         where: {
             id: loggedInUser.id
-        },
-        include: [{
-            model: db.Tank,
-            include: [db.Fish]
-        },
-        db.Fish]
+        }
     }).then(dbUser => {
         res.json(dbUser)
     }).catch(err => {
