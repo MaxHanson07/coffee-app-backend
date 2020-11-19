@@ -45,7 +45,7 @@ router.post("/api/users/oauth", async function (req, res) {
         const token = req.body.tokenId
         const userInfo = await verify(token)
         console.log("token: ", userInfo)
-        let result = await (await OAuthUser.findOne({user_id: userInfo.user_id})).populate("favorite_cafes")
+        let result = await (await OAuthUser.findOne({user_id: userInfo.user_id}))
         if (!result) {
             result = await OAuthUser.create(userInfo)
         }
