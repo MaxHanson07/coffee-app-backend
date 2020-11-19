@@ -1,10 +1,30 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios")
+const jwt = require("jsonwebtoken");
 
 const mongoose = require("mongoose");
 const Cafe = require("../models/cafeModel");
 const Roaster = require("../models/roasterModel");
+
+
+const checkAuthStatus = request => {
+    if (!request.headers.authorization) {
+        return false
+    }
+    const token = request.headers.authorization.split(" ")[1]
+
+    const loggedInUser = jwt.verify(token, process.env.JWT_SECRET, (err, data) => {
+        if (err) {
+            return false
+        }
+        else {
+            return data
+        }
+    });
+    console.log(loggedInUser)
+    return loggedInUser
+}
 
 // Function to convert Google's photo_references to urls
 async function convertReferencesToUrls(photoArray) {
@@ -121,6 +141,11 @@ router.put("/api/cafes/like/:id", async function (req, res) {
 
 // Add a cafe
 router.post("/api/cafes", async function (req, res) {
+    const loggedInUser = checkAuthStatus(req);
+    // if(!loggedInUser){
+    //     return res.status(401).send("Must be logged in")
+    // }
+    console.log(loggedInUser);
     try {
         let cafe = req.body
         cafe.likes = 0
@@ -137,6 +162,11 @@ router.post("/api/cafes", async function (req, res) {
 
 // Edit a cafe
 router.put("/api/cafes/:id", async function (req, res) {
+    const loggedInUser = checkAuthStatus(req);
+    // if(!loggedInUser){
+    //     return res.status(401).send("Must be logged in")
+    // }
+    console.log(loggedInUser);
     try {
         let updated = await Cafe.findOneAndUpdate(
             {
@@ -171,6 +201,11 @@ router.put("/api/cafes/:id", async function (req, res) {
 
 // Delete a cafe
 router.delete("/api/cafes/:id", async function (req, res) {
+    const loggedInUser = checkAuthStatus(req);
+    // if(!loggedInUser){
+    //     return res.status(401).send("Must be logged in")
+    // }
+    console.log(loggedInUser);
     try {
         let result = await Cafe.deleteOne({ _id: mongoose.Types.ObjectId(req.params.id) })
         res.json(result)
@@ -182,6 +217,11 @@ router.delete("/api/cafes/:id", async function (req, res) {
 
 // Return photo url from photo reference
 router.post("/api/photos", async function (req, res) {
+    const loggedInUser = checkAuthStatus(req);
+    // if(!loggedInUser){
+    //     return res.status(401).send("Must be logged in")
+    // }
+    console.log(loggedInUser);
     try {
         let photosWithUrls = await convertReferencesToUrls(req.body.photos)
         res.json(photosWithUrls)

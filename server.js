@@ -28,9 +28,11 @@ mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/coffeedb", {
 const cafeRoutes = require("./controllers/cafeController");
 const roasterRoutes = require("./controllers/roasterController");
 const requestRoutes = require("./controllers/requestController")
+const userRoutes = require("./controllers/userController")
 app.use(cafeRoutes);
 app.use(roasterRoutes);
 app.use(requestRoutes);
+app.use(userRoutes);
 
 // Start listening
 app.listen(PORT, function () {
