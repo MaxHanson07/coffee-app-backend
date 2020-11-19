@@ -15,7 +15,13 @@ const OauthUserSchema = new mongoose.Schema({
     },
     email: {
         type: String
-    }
+    },
+    liked_cafes: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Cafe"
+        }
+    ]
 });
 
 

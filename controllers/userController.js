@@ -5,12 +5,12 @@ const OAuthUser = require("../models/oauthUserModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require('google-auth-library');
-const client = new OAuth2Client("280932498066-hj1erov9gsausin5g9v06g8j90md2egm.apps.googleusercontent.com");
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 async function verify(token) {
     const ticket = await client.verifyIdToken({
         idToken: token,
-        audience: "280932498066-hj1erov9gsausin5g9v06g8j90md2egm.apps.googleusercontent.com",
+        audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
     return {
@@ -45,7 +45,7 @@ router.post("/api/users/oauth", async function (req, res) {
         const token = req.body.tokenId
         const userInfo = await verify(token)
         console.log("token: ", userInfo)
-        let result = await OAuthUser.findOne({user_id: userInfo.user_id})
+        let result = await (await OAuthUser.findOne({user_id: userInfo.user_id})).populate("favorite_cafes")
         if (!result) {
             result = await OAuthUser.create(userInfo)
         }
@@ -53,6 +53,23 @@ router.post("/api/users/oauth", async function (req, res) {
         res.send(result)
     } catch (err) {
         console.error(err)
+    }
+})
+
+router.post("/api/users/cafes/:cafeId", async function (req, res) {
+    try {
+        let updated = OAuthUser.findOneAndUpdate(
+            {
+                user_id: req.body.user_id
+            }, 
+            {
+                $push : {liked_cafes: req.params.cafeId},
+                new: true
+            })
+        res.json(updated)
+    } catch (err) {
+        console.error(err)
+        res.status(500).send(err)
     }
 })
 
