@@ -11,6 +11,8 @@ const { OAuth2Client } = require('google-auth-library');
 const Cafe = require("../models/cafeModel");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+
+// Verify Google Signin token
 async function verify(token) {
     const ticket = await client.verifyIdToken({
         idToken: token,
@@ -25,6 +27,7 @@ async function verify(token) {
     }
 }
 
+// Verify Dashboard token
 const checkAuthStatus = request => {
     console.log(request.headers);
     if (!request.headers.authorization) {
@@ -43,6 +46,16 @@ const checkAuthStatus = request => {
     console.log(loggedInUser)
     return loggedInUser
 }
+
+router.get("/api/users/checkAuth", function (req, res) {
+    const loggedInUser = checkAuthStatus(req);
+    console.log(loggedInUser);
+    if (!loggedInUser) {
+        return res.status(401).send("invalid token")
+    } else {
+        res.send("Valid Token")
+    }
+})
 
 router.post("/api/users/oauth", async function (req, res) {
     try {
@@ -121,7 +134,7 @@ router.get("/users", (req, res) => {
 
 router.post("/api/users/signup", (req, res) => {
     User.create({
-        name: req.body.name,
+        username: req.body.username,
         password: req.body.password
     }).then(newUser => {
         res.json(newUser);
@@ -133,10 +146,9 @@ router.post("/api/users/signup", (req, res) => {
 
 router.post("/api/users/login", (req, res) => {
     User.findOne({
-        where: {
-            email: req.body.email,
+            username: req.body.username,
         }
-    }).then(foundUser => {
+    ).then(foundUser => {
         if (!foundUser) {
             return res.status(404).send("USER NOT FOUND")
         }
@@ -151,6 +163,9 @@ router.post("/api/users/login", (req, res) => {
         } else {
             return res.status(403).send("wrong password")
         }
+    }).catch(err=> {
+        console.error(err) 
+        res.status(500).send(err)
     })
 })
 
