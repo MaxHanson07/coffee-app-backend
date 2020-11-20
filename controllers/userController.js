@@ -119,9 +119,8 @@ router.get("/users", (req, res) => {
     })
 })
 
-router.post("/signup", (req, res) => {
+router.post("/api/users/signup", (req, res) => {
     User.create({
-        // email: req.body.email,
         name: req.body.name,
         password: req.body.password
     }).then(newUser => {
@@ -132,7 +131,7 @@ router.post("/signup", (req, res) => {
     })
 })
 
-router.post("/login", (req, res) => {
+router.post("/api/users/login", (req, res) => {
     User.findOne({
         where: {
             email: req.body.email,
@@ -155,7 +154,7 @@ router.post("/login", (req, res) => {
     })
 })
 
-router.get("/secretProfile", (req, res) => {
+router.get("/api/users/secretProfile", (req, res) => {
     const loggedInUser = checkAuthStatus(req);
     console.log(loggedInUser);
     if (!loggedInUser) {
