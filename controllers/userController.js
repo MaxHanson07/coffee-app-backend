@@ -49,7 +49,7 @@ router.post("/api/users/oauth", async function (req, res) {
         const token = req.body.tokenId
         const userInfo = await verify(token)
         console.log("token: ", userInfo)
-        let result = await (await OAuthUser.findOne({ user_id: userInfo.user_id }))
+        let result = await OAuthUser.findOne({ user_id: userInfo.user_id }).populate("check_ins.cafe_id")
         if (!result) {
             result = await OAuthUser.create(userInfo)
         }
@@ -85,7 +85,7 @@ router.post("/api/users/checkin/:cafeId", async function (req, res) {
         console.log("cafe_id: " + req.params.cafeId)
         console.log("req.body: ", req.body)
         let checkInObj = {
-            liked_cafes: mongoose.Types.ObjectId(req.params.cafeId),
+            cafe_id: req.params.cafeId,
             timestamp: req.body.date
         }
         console.log(checkInObj)
