@@ -2,11 +2,17 @@ const express = require("express");
 const router = express.Router();
 const User = require('../models/userModel')
 const OAuthUser = require("../models/oauthUserModel");
+// const Cafe = require("../models/cafeModel");
+const mongoose = require("mongoose");
+
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require('google-auth-library');
+const Cafe = require("../models/cafeModel");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+
+// Verify Google Signin token
 async function verify(token) {
     const ticket = await client.verifyIdToken({
         idToken: token,
@@ -21,6 +27,7 @@ async function verify(token) {
     }
 }
 
+// Verify Dashboard token
 const checkAuthStatus = request => {
     console.log(request.headers);
     if (!request.headers.authorization) {
@@ -40,12 +47,22 @@ const checkAuthStatus = request => {
     return loggedInUser
 }
 
+router.get("/api/users/checkAuth", function (req, res) {
+    const loggedInUser = checkAuthStatus(req);
+    console.log(loggedInUser);
+    if (!loggedInUser) {
+        return res.status(401).send("invalid token")
+    } else {
+        res.send("Valid Token")
+    }
+})
+
 router.post("/api/users/oauth", async function (req, res) {
     try {
         const token = req.body.tokenId
         const userInfo = await verify(token)
         console.log("token: ", userInfo)
-        let result = await (await OAuthUser.findOne({user_id: userInfo.user_id}))
+        let result = await OAuthUser.findOne({ user_id: userInfo.user_id }).populate("check_ins.cafe_id")
         if (!result) {
             result = await OAuthUser.create(userInfo)
         }
@@ -56,20 +73,53 @@ router.post("/api/users/oauth", async function (req, res) {
     }
 })
 
+
+// Unused route to like a cafe
 router.post("/api/users/cafes/:cafeId", async function (req, res) {
     try {
         let updated = OAuthUser.findOneAndUpdate(
             {
                 user_id: req.body.user_id
-            }, 
+            },
             {
-                $push : {liked_cafes: req.params.cafeId},
+                $push: { liked_cafes: req.params.cafeId },
                 new: true
             })
         res.json(updated)
     } catch (err) {
         console.error(err)
         res.status(500).send(err)
+    }
+})
+
+// Route to check in at a cafe
+router.post("/api/users/checkin/:cafeId", async function (req, res) {
+    try {
+        console.log("cafe_id: " + req.params.cafeId)
+        console.log("req.body: ", req.body)
+        let checkInObj = {
+            cafe_id: req.params.cafeId,
+            timestamp: req.body.date
+        }
+        console.log(checkInObj)
+        let success = await OAuthUser.findOneAndUpdate({ user_id: req.body.user_id },
+            {
+                $push: {
+                    check_ins: checkInObj
+                },
+            }
+        )
+        await Cafe.findOneAndUpdate(
+            {
+                _id: mongoose.Types.ObjectId(req.params.cafeId)
+            },
+            {
+                $inc: { check_ins: 1 }
+            })
+        res.json(success.toJSON())
+    } catch (err) {
+        console.error(err)
+        res.status(500).send("Error!")
     }
 })
 
@@ -82,10 +132,9 @@ router.get("/users", (req, res) => {
     })
 })
 
-router.post("/signup", (req, res) => {
+router.post("/api/users/signup", (req, res) => {
     User.create({
-        // email: req.body.email,
-        name: req.body.name,
+        username: req.body.username,
         password: req.body.password
     }).then(newUser => {
         res.json(newUser);
@@ -95,12 +144,11 @@ router.post("/signup", (req, res) => {
     })
 })
 
-router.post("/login", (req, res) => {
+router.post("/api/users/login", (req, res) => {
     User.findOne({
-        where: {
-            email: req.body.email,
+            username: req.body.username,
         }
-    }).then(foundUser => {
+    ).then(foundUser => {
         if (!foundUser) {
             return res.status(404).send("USER NOT FOUND")
         }
@@ -115,10 +163,13 @@ router.post("/login", (req, res) => {
         } else {
             return res.status(403).send("wrong password")
         }
+    }).catch(err=> {
+        console.error(err) 
+        res.status(500).send(err)
     })
 })
 
-router.get("/secretProfile", (req, res) => {
+router.get("/api/users/secretProfile", (req, res) => {
     const loggedInUser = checkAuthStatus(req);
     console.log(loggedInUser);
     if (!loggedInUser) {

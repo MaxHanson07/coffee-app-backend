@@ -1,30 +1,3 @@
-// const mongoose = require("mongoose");
-// const bcrypt =require("bcrypt");
-
-// const userSchema = new mongoose.Schema({
-//     username: {
-//         type: mongoose.Schema.Types.ObjectId
-//     },
-//     password: {
-//         type: String
-//     },
-//     email: {
-//         type: String
-//     },
-//     userType: {
-//         type: String
-//     }
-// });
-
-// const User = mongoose.model("User", userSchema);
-
-// User.beforeCreate(function (user) {
-//     user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10), null);
-// })
-
-// module.exports = User;
-
-
 const mongoose = require('mongoose'),
     Schema = mongoose.Schema,
     bcrypt = require('bcrypt'),
@@ -56,11 +29,5 @@ UserSchema.pre('save', function(next) {
     });
 });
 
-// UserSchema.methods.comparePassword = function(candidatePassword, cb) {
-//     bcrypt.compare(candidatePassword, this.password, function(err, isMatch) {
-//         if (err) return cb(err);
-//         cb(null, isMatch);
-//     });
-// };
 
 module.exports = mongoose.model('User', UserSchema);
